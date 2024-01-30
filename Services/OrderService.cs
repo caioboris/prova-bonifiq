@@ -1,28 +1,26 @@
 ﻿using ProvaPub.Models;
+using ProvaPub.Models.Enums;
+using ProvaPub.Services.Interfaces;
 
 namespace ProvaPub.Services
 {
-	public class OrderService
+	public class OrderService : IOrderService
 	{
-		public async Task<Order> PayOrder(string paymentMethod, decimal paymentValue, int customerId)
-		{
-			if (paymentMethod == "pix")
-			{
-				//Faz pagamento...
-			}
-			else if (paymentMethod == "creditcard")
-			{
-				//Faz pagamento...
-			}
-			else if (paymentMethod == "paypal")
-			{
-				//Faz pagamento...
-			}
+		private readonly PaymentProcessor _processor;
 
-			return await Task.FromResult( new Order()
-			{
-				Value = paymentValue
-			});
+        public OrderService(PaymentProcessor processor)
+        {
+            _processor = processor;
+        }
+
+        public async Task<Order> PayOrder(string paymentMethod, decimal paymentValue, int customerId)
+		{
+            if (!Enum.TryParse<PaymentMethod>(paymentMethod, true, out var parsedPaymentMethod))
+            {
+                throw new ArgumentException("Método de pagamento inválido", nameof(paymentMethod));
+            }
+
+            return await _processor.ProcessPayment(parsedPaymentMethod, paymentValue, customerId);
 		}
 	}
 }
